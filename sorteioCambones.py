@@ -21,7 +21,7 @@ sh=abrir_planilha()
 # df = pd.DataFrame(sh.worksheet("Cambones").get('A1:Z'))
 worksheet = sh.worksheet("Cambones")
 lista_a = [
-    'Elanisia', 'Kathya', 'Leticia', 'Luana', 'Paolla', 'Paulo',
+    'Elanisia', 'Kathya', 'Leticia', 'Luana', 'Paolla', 'Paulo', 'Nathalia',
     'Soraia', 'Thais', 'Walker', 'FICHAS', 'COPA', 'APOIO GERAL'
 ]
 lista_b = [

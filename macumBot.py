@@ -9,7 +9,7 @@ import time
 import pygetwindow as gw
 import ObterMensagensViaGS
 
-def enviar_mensagens_via_Whatsapp(Ctt_DESTINO):
+def enviar_mensagens_via_whatsapp(contato):
     hora_atual = datetime.datetime.now().hour
     # Cria uma mensagem com base na hora
     if 5 <= hora_atual < 12:
@@ -26,7 +26,7 @@ def enviar_mensagens_via_Whatsapp(Ctt_DESTINO):
     time.sleep(2)
     pyautogui.press('enter')
     time.sleep(1)
-    pyautogui.typewrite(Ctt_DESTINO, interval=0.1)  # useful for entering text, newline is Enter
+    pyautogui.typewrite(contato, interval=0.1)  # useful for entering text, newline is Enter
     pyautogui.press('enter')
     pyautogui.keyDown('ctrl')
     pyautogui.press('v')
@@ -71,4 +71,4 @@ if __name__ == "__main__":
 
     else:
         personagem(sys.argv[1])
-        enviar_mensagens_via_Whatsapp(sys.argv[2])
+        enviar_mensagens_via_whatsapp(sys.argv[2])

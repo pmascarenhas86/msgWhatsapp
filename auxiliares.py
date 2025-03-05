@@ -15,18 +15,14 @@ pd.set_option('display.max_colwidth', 30)
 pd.set_option('display.colheader_justify', 'left')
 
 
-# Funções Auxiliares
-def fecharArquivo():
-    sys.stdout = open('output.txt', 'r', encoding='utf-8')
-    sys.stdout = sys.__stdout__
 
 def abrir_planilha():
-    gc = gspread.service_account(filename='credentials.json')
+    gc = gspread.service_account(filename='config/credentials.json')
     sh= gc.open_by_key("16tjePCI2QMaMIOLIFVNYjcM7A2UFHYpt6DZ-sk6hioo")
     return sh
 
 def abrir_planilha_dirigentes():
-    gc = gspread.service_account(filename='credentials.json')
+    gc = gspread.service_account(filename='config/credentials.json')
     sh= gc.open_by_key("10DW9L8Qp88T9xG2KhzK8I8theLHDIch_dn6LH88_dB0")
     return sh
 
@@ -57,7 +53,6 @@ def imprimir_lista_formatada(lista, coluna):
 
 
 def proximo_sabado():
-# table = tabulate(df, headers='keys', tablefmt='fancy_grid')
     hoje = datetime.now()
     dia_da_semana = datetime.now().weekday()
     dias_ate_sabado = (5 - dia_da_semana + 7) % 7

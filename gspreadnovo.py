@@ -10,4 +10,4 @@ print(worksheet_list)
 #Selecionar a planilha que quero
 worksheet = sh.worksheet("Cambones")
 #Obter um valor da planilha
-worksheet.update('OIOI','B20')
+# worksheet.update('OIOI','B20')
