@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WhatsApp Bot QR Code</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f2f5;
+            color: #333;
+        }
+        .container {
+            text-align: center;
+            background-color: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            max-width: 500px;
+            width: 90%;
+        }
+        h1 {
+            color: #25D366;
+            margin-bottom: 1.5rem;
+        }
+        #qrcode {
+            margin: 2rem auto;
+            padding: 1rem;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        #qrcode img {
+            max-width: 100%;
+            height: auto;
+        }
+        .status {
+            margin-top: 1rem;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .waiting {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        .ready {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .instructions {
+            margin-top: 1.5rem;
+            text-align: left;
+            line-height: 1.5;
+        }
+        .instructions ol {
+            padding-left: 1.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>WhatsApp Bot QR Code</h1>
+        
+        <div id="status" class="status waiting">Waiting for QR code...</div>
+        
+        <div id="qrcode"></div>
+        
+        <div class="instructions">
+            <h3>Instructions:</h3>
+            <ol>
+                <li>Open WhatsApp on your phone</li>
+                <li>Go to Settings > WhatsApp Web/Desktop</li>
+                <li>Scan the QR code displayed above</li>
+                <li>Once connected, the status will change to "Ready"</li>
+            </ol>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+        const qrcodeElement = document.getElementById('qrcode');
+        const statusElement = document.getElementById('status');
+        
+        socket.on('qr', (qr) => {
+            qrcodeElement.innerHTML = `<img src="${qr}" alt="QR Code">`;
+            statusElement.textContent = 'Scan this QR code with WhatsApp';
+            statusElement.className = 'status waiting';
+        });
+        
+        socket.on('ready', () => {
+            qrcodeElement.innerHTML = '<p>WhatsApp Bot is connected and ready!</p>';
+            statusElement.textContent = 'WhatsApp Bot is ready!';
+            statusElement.className = 'status ready';
+        });
+    </script>
+</body>
+</html> 
