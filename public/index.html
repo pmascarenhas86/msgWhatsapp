@@ -62,6 +62,17 @@
         .instructions ol {
             padding-left: 1.5rem;
         }
+        #log {
+            margin-top: 1rem;
+            padding: 0.5rem;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+            max-height: 150px;
+            overflow-y: auto;
+            text-align: left;
+            font-family: monospace;
+            font-size: 0.9rem;
+        }
     </style>
 </head>
 <body>
@@ -71,6 +82,8 @@
         <div id="status" class="status waiting">Waiting for QR code...</div>
         
         <div id="qrcode"></div>
+        
+        <div id="log"></div>
         
         <div class="instructions">
             <h3>Instructions:</h3>
@@ -88,18 +101,39 @@
         const socket = io();
         const qrcodeElement = document.getElementById('qrcode');
         const statusElement = document.getElementById('status');
+        const logElement = document.getElementById('log');
+        
+        function addLog(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            logElement.innerHTML += `<div>[${timestamp}] ${message}</div>`;
+            logElement.scrollTop = logElement.scrollHeight;
+        }
+        
+        socket.on('connect', () => {
+            addLog('Connected to server');
+        });
+        
+        socket.on('status', (status) => {
+            addLog(`Status: ${status}`);
+            statusElement.textContent = status;
+            
+            if (status.includes('ready')) {
+                statusElement.className = 'status ready';
+            } else {
+                statusElement.className = 'status waiting';
+            }
+        });
         
         socket.on('qr', (qr) => {
             qrcodeElement.innerHTML = `<img src="${qr}" alt="QR Code">`;
-            statusElement.textContent = 'Scan this QR code with WhatsApp';
-            statusElement.className = 'status waiting';
+            addLog('New QR code received');
         });
         
-        socket.on('ready', () => {
-            qrcodeElement.innerHTML = '<p>WhatsApp Bot is connected and ready!</p>';
-            statusElement.textContent = 'WhatsApp Bot is ready!';
-            statusElement.className = 'status ready';
+        socket.on('disconnect', () => {
+            addLog('Disconnected from server');
+            statusElement.textContent = 'Disconnected from server';
+            statusElement.className = 'status waiting';
         });
     </script>
 </body>
-</html> 
+</html>

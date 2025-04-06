@@ -2,12 +2,19 @@ services:
   - type: web
     name: whatsapp-bot
     env: node
-    buildCommand: npm install
+    buildCommand: |
+      npm install
+      pip install -r requirements.txt
     startCommand: node index.js
     plan: free
     healthCheckPath: /
     autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PYTHONUNBUFFERED
+        value: 1
     disk:
       name: whatsapp-session
       mountPath: /opt/render/project/src
-      sizeGB: 1 
+      sizeGB: 1

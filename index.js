@@ -1,15 +1,59 @@
 ﻿const { Client } = require('whatsapp-web.js');
-const qrcode = require('qrcode-terminal');
+const qrcode = require('qrcode');
+const express = require('express');
+const http = require('http');
+const socketIo = require('socket.io');
 const { spawn } = require('child_process');
 
-const client = new Client();
+// Create Express app
+const app = express();
+const server = http.createServer(app);
+const io = socketIo(server);
+
+// Serve static files from the public directory
+app.use(express.static('public'));
+
+// Create WhatsApp client
+const client = new Client({
+    puppeteer: {
+        args: [
+            '--no-sandbox',
+            '--disable-setuid-sandbox',
+            '--disable-dev-shm-usage',
+            '--disable-accelerated-2d-canvas',
+            '--no-first-run',
+            '--no-zygote',
+            '--disable-gpu'
+        ]
+    }
+});
+
+const mensagemAjuda = `👋 Olá! Aqui estão os comandos disponíveis e o que cada um retorna:
+📅 *!calendario* – Lista completa com todas as datas importantes do calendário espiritual.
+💳 *!mensalidades* – Mostra quem já pagou e quem ainda está em aberto nas mensalidades.
+📂 *!contas* – Lista todas as contas pendentes ou quitadas.
+🧘‍♀️ *!trabalhos* – Mostra os trabalhos marcados para o mês atual.
+💰 *!valores* – Apresenta os valores esperados para arrecadação.
+📊 *!arrecadado* – Informa quanto foi arrecadado até o momento.
+⚠️ *!pendente* – Mostra os valores que ainda estão pendentes.
+📈 *!total* – Apresenta o balanço geral: arrecadado, pendente e total previsto.
+ℹ️ *!ajuda* ou *!comandos* – Mostra esta mensagem de ajuda.
+Fique à vontade para usar qualquer comando. Estou aqui para ajudar! 😊`;
+
+// Store QR code data
+let qrCodeData = null;
 
 client.on('ready', () => {
     console.log('Client is ready!');
+    io.emit('status', 'Client is ready!');
 });
 
-client.on('qr', qr => {
-    qrcode.generate(qr, {small: true});
+client.on('qr', async (qr) => {
+    console.log('New QR code received');
+    // Generate QR code as data URL
+    qrCodeData = await qrcode.toDataURL(qr);
+    io.emit('qr', qrCodeData);
+    io.emit('status', 'New QR code received. Please scan with WhatsApp.');
 });
 
 // Handle incoming messages
@@ -21,15 +65,7 @@ client.on('message', async (message) => {
     console.log(`Time: ${new Date().toLocaleString()}`);
     console.log(`------------------\n`);
     
-    // Reply with "RECEVIDE" before any other processing
-    try {
-        await message.reply('RECEVIDE');
-        console.log(`Replied with "RECEVIDE" to ${message.from}`);
-    } catch (error) {
-        console.error('Error sending "RECEVIDE" reply:', error);
-    }
-    
-    // Process specific commands after sending the acknowledgment
+    // Process specific commands
     if (message.body === 'Oi' || message.body === 'Olá') {
         client
             .sendMessage(message.from, 'Olá! Tudo bem com você?')
@@ -69,6 +105,8 @@ client.on('message', async (message) => {
     } else if (message.body.toLowerCase() === '!tudo') {
         // Execute all functions and send the result
         executePythonCommand(message.from, '--all');
+    } else if (message.body.toLowerCase() === '!ajuda' || message.body.toLowerCase() === '!comandos') {
+        client.sendMessage(message.from, mensagemAjuda);
     }
 });
 
@@ -113,4 +151,27 @@ function executePythonCommand(contactNumber, command) {
     });
 }
 
+// Socket.io connection
+io.on('connection', (socket) => {
+    console.log('New client connected');
+    socket.emit('status', 'Connected to server');
+    
+    // Send current QR code if available
+    if (qrCodeData) {
+        socket.emit('qr', qrCodeData);
+    }
+    
+    socket.on('disconnect', () => {
+        console.log('Client disconnected');
+    });
+});
+
+// Start the server
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+    io.emit('status', `Server running on port ${PORT}`);
+});
+
+// Initialize WhatsApp client
 client.initialize();
