@@ -176,3 +176,5 @@ def mensagem_pos_faxina() -> None:
     ]
     for linha in linhas:
         print(linha)
+
+

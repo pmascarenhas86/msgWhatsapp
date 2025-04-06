@@ -1,131 +1,116 @@
 ﻿const { Client } = require('whatsapp-web.js');
-const qrcode = require('qrcode');
+const qrcode = require('qrcode-terminal');
 const { spawn } = require('child_process');
-const express = require('express');
-const http = require('http');
-const socketIo = require('socket.io');
 
-// Create Express app
-const app = express();
-const server = http.createServer(app);
-const io = socketIo(server);
-
-// Serve static files
-app.use(express.static('public'));
-
-// Store QR code data
-let qrCodeData = null;
-
-// Create WhatsApp client
 const client = new Client();
 
-// Serve the main page
-app.get('/', (req, res) => {
-  res.sendFile(__dirname + '/public/index.html');
-});
-
-// Socket.io connection
-io.on('connection', (socket) => {
-  console.log('Client connected');
-  
-  // Send current QR code if available
-  if (qrCodeData) {
-    socket.emit('qr', qrCodeData);
-  }
-  
-  socket.on('disconnect', () => {
-    console.log('Client disconnected');
-  });
-});
-
 client.on('ready', () => {
-  console.log('Client is ready!');
-  qrCodeData = null;
-  io.emit('ready');
-  start(client);
+    console.log('Client is ready!');
 });
 
-client.on('qr', async (qr) => {
-  try {
-    // Generate QR code as data URL
-    const qrDataUrl = await qrcode.toDataURL(qr);
-    qrCodeData = qrDataUrl;
-    io.emit('qr', qrDataUrl);
-    console.log('QR Code generated and sent to clients');
-  } catch (err) {
-    console.error('Error generating QR code:', err);
-  }
+client.on('qr', qr => {
+    qrcode.generate(qr, {small: true});
 });
 
-function start(client) {
-  client.onMessage((message) => {
-    // Log the received message
-    console.log(`Message received from ${message.from}: "${message.body}"`);
+// Handle incoming messages
+client.on('message', async (message) => {
+    // Print message details in terminal
+    console.log(`\n--- New Message ---`);
+    console.log(`From: ${message.from}`);
+    console.log(`Message: ${message.body}`);
+    console.log(`Time: ${new Date().toLocaleString()}`);
+    console.log(`------------------\n`);
     
-    // Always reply to acknowledge receipt
-    client.sendText(message.from, `Recebi sua mensagem: "${message.body}"`)
-      .then((result) => {
-        console.log('Acknowledgment sent successfully');
-      })
-      .catch((erro) => {
-        console.error('Error sending acknowledgment:', erro);
-      });
+    // Reply with "RECEVIDE" before any other processing
+    try {
+        await message.reply('RECEVIDE');
+        console.log(`Replied with "RECEVIDE" to ${message.from}`);
+    } catch (error) {
+        console.error('Error sending "RECEVIDE" reply:', error);
+    }
     
-    // Process specific commands
+    // Process specific commands after sending the acknowledgment
     if (message.body === 'Oi' || message.body === 'Olá') {
-      client
-        .sendText(message.from, 'Olá! Tudo bem com você?')
-        .then((result) => {
-          console.log('Greeting sent successfully');
-        })
-        .catch((erro) => {
-          console.error('Erro ao enviar mensagem: ', erro);
-        });
-    } else if (message.body.toLowerCase() === 'quais as minhas tarefas') {
-      tarefas(client, message.from);
+        client
+            .sendMessage(message.from, 'Olá! Tudo bem com você?')
+            .then((result) => {
+                console.log('Greeting sent successfully');
+            })
+            .catch((erro) => {
+                console.error('Erro ao enviar mensagem: ', erro);
+            });
+    } else if (message.body.toLowerCase() === '!calendario') {
+        // Execute get_agenda_completa() function and send the result
+        executePythonCommand(message.from, '--getAgendaCompleta');
+    } else if (message.body.toLowerCase() === '!mensalidades') {
+        // Execute get_mensalidades() function and send the result
+        executePythonCommand(message.from, '--getMensalidades');
+    } else if (message.body.toLowerCase() === '!doacoes') {
+        // Execute get_doacoes() function and send the result
+        executePythonCommand(message.from, '--getDoacoes');
+    } else if (message.body.toLowerCase() === '!contas') {
+        // Execute get_contas() function and send the result
+        executePythonCommand(message.from, '--getContas');
+    } else if (message.body.toLowerCase() === '!trabalhos') {
+        // Execute get_trabalhos_mes() function and send the result
+        executePythonCommand(message.from, '--getTrabalhosMes');
+    } else if (message.body.toLowerCase() === '!valores') {
+        // Execute get_valores() function and send the result
+        executePythonCommand(message.from, '--getValores');
+    } else if (message.body.toLowerCase() === '!arrecadado') {
+        // Execute get_arrecadado() function and send the result
+        executePythonCommand(message.from, '--getArrecadado');
+    } else if (message.body.toLowerCase() === '!pendente') {
+        // Execute get_pendente() function and send the result
+        executePythonCommand(message.from, '--getPendente');
+    } else if (message.body.toLowerCase() === '!total') {
+        // Execute get_total() function and send the result
+        executePythonCommand(message.from, '--getTotal');
+    } else if (message.body.toLowerCase() === '!tudo') {
+        // Execute all functions and send the result
+        executePythonCommand(message.from, '--all');
     }
-  });
-}
-
-function tarefas(client, contactNumber) {
-  // Execute the Python script to get tasks
-  const pythonProcess = spawn('python', ['montarDF.py']);
-  
-  let outputData = '';
-  let errorData = '';
-  
-  // Collect data from stdout
-  pythonProcess.stdout.on('data', (data) => {
-    outputData += data.toString();
-  });
-  
-  // Collect data from stderr
-  pythonProcess.stderr.on('data', (data) => {
-    errorData += data.toString();
-  });
-  
-  // When the process exits
-  pythonProcess.on('close', (code) => {
-    if (code !== 0) {
-      console.error(`Python process exited with code ${code}`);
-      console.error(`Error: ${errorData}`);
-      client.sendText(contactNumber, 'Desculpe, ocorreu um erro ao buscar suas tarefas.');
-    } else {
-      // Send the output to the WhatsApp contact
-      client.sendText(contactNumber, outputData)
-        .then((result) => {
-          console.log('Tarefas enviadas com sucesso para:', contactNumber);
-        })
-        .catch((erro) => {
-          console.error('Erro ao enviar tarefas:', erro);
-        });
-    }
-  });
-}
-
-// Start the server
-const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-  client.initialize();
 });
+
+// Function to execute Python command and send the result
+function executePythonCommand(contactNumber, command) {
+    console.log(`Executing Python command: ${command} for ${contactNumber}`);
+    
+    // Execute the Python script with the specified command
+    const pythonProcess = spawn('python', ['montarDF.py', command]);
+    
+    let outputData = '';
+    let errorData = '';
+    
+    // Collect data from stdout
+    pythonProcess.stdout.on('data', (data) => {
+        outputData += data.toString();
+    });
+    
+    // Collect data from stderr
+    pythonProcess.stderr.on('data', (data) => {
+        errorData += data.toString();
+    });
+    
+    // When the process exits
+    pythonProcess.on('close', (code) => {
+        if (code !== 0) {
+            console.error(`Python process exited with code ${code}`);
+            console.error(`Error: ${errorData}`);
+            client.sendMessage(contactNumber, 'Desculpe, ocorreu um erro ao processar sua solicitação.')
+                .then(() => console.log('Error message sent successfully'))
+                .catch(err => console.error('Error sending error message:', err));
+        } else {
+            // Send the output to the WhatsApp contact
+            client.sendMessage(contactNumber, outputData)
+                .then(() => {
+                    console.log(`Command ${command} result sent successfully to:`, contactNumber);
+                })
+                .catch((erro) => {
+                    console.error(`Error sending ${command} result:`, erro);
+                });
+        }
+    });
+}
+
+client.initialize();

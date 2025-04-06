@@ -6,4 +6,8 @@ services:
     startCommand: node index.js
     plan: free
     healthCheckPath: /
-    autoDeploy: true 
+    autoDeploy: true
+    disk:
+      name: whatsapp-session
+      mountPath: /opt/render/project/src
+      sizeGB: 1 

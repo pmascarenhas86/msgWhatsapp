@@ -7,11 +7,13 @@ import auxiliares
 import logging
 from datetime import datetime, timedelta
 from typing import List, Dict, Any, Optional
+import argparse
+import sys
 
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s'
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
 
@@ -38,6 +40,17 @@ aux = auxiliares
 sh = aux.abrir_planilha()
 NOME_MES = calendar.month_name[datetime.now().month].capitalize()
 
+# New global variables
+df_mensalidades = None
+df_doacoes = None
+df_contas = None
+df_trabalhos = None
+df_agenda = None
+df_valores = None
+df_arrecadado = None
+df_pendente = None
+df_total = None
+
 def get_mensalidades() -> None:
     """
     Obtém e exibe as mensalidades pagas e em aberto.
@@ -45,6 +58,7 @@ def get_mensalidades() -> None:
     Returns:
         None
     """
+    global df_mensalidades
     try:
         sh = aux.abrir_planilha_dirigentes()
         logger.info('Mês de referência: %s', NOME_MES.upper())
@@ -78,6 +92,8 @@ def get_mensalidades() -> None:
         
         valor_em_aberto = len(inadimplente) * MENSALIDADE_VALOR
         logger.info('Valor em aberto: R$. %d', valor_em_aberto)
+        
+        df_mensalidades = df
     except Exception as e:
         logger.error("Erro ao processar mensalidades: %s", e)
 
@@ -88,6 +104,7 @@ def get_doacoes() -> None:
     Returns:
         None
     """
+    global df_doacoes
     try:
         sh = aux.abrir_planilha_dirigentes()
         total_arrecadado_cell = sh.worksheet("2024").find("Total Arrecadado")
@@ -101,6 +118,8 @@ def get_doacoes() -> None:
         
         aux.montar_headers('| DOAÇÕES |')
         logger.info('DOAÇÕES %s: %s', NOME_MES, doacao_mes_atual)
+        
+        df_doacoes = df
     except Exception as e:
         logger.error("Erro ao processar doações: %s", e)
 
@@ -111,6 +130,7 @@ def get_contas() -> None:
     Returns:
         None
     """
+    global df_contas
     try:
         sh = aux.abrir_planilha_dirigentes()
         total_despesas_cell_inicio = sh.worksheet("2024").find("DESPESAS")
@@ -132,6 +152,8 @@ def get_contas() -> None:
         logger.info('Mês de referência: %s', NOME_MES.upper())
         aux.montar_headers('| CONTAS PAGAS |')
         aux.imprimir_dados('arquivo', df)
+        
+        df_contas = df
     except Exception as e:
         logger.error("Erro ao processar contas: %s", e)
 
@@ -301,6 +323,7 @@ def get_valores() -> None:
     Returns:
         None
     """
+    global df_valores
     try:
         sh = aux.abrir_planilha_dirigentes()
         data = sh.worksheet("2024").get_all_values()
@@ -309,6 +332,8 @@ def get_valores() -> None:
         doacao_mes_atual = df.loc[df['NOME'] == DOACOES, NOME_MES].values[0]
         
         logger.info('DOAÇÕES %s: R$ %s', NOME_MES, doacao_mes_atual)
+        
+        df_valores = df
     except Exception as e:
         logger.error("Erro ao processar valores: %s", e)
 
@@ -319,6 +344,7 @@ def get_trabalhos_mes() -> None:
     Returns:
         None
     """
+    global df_trabalhos
     try:
         filtro = aux.proximo_sabado().strftime("/%m/")
         aux.montar_headers('| CALENDARIO |')
@@ -332,6 +358,8 @@ def get_trabalhos_mes() -> None:
             else:
                 output_string = "%s - %s" % (row[0], row[1])
             logger.info(output_string)
+        
+        df_trabalhos = df
     except Exception as e:
         logger.error("Erro ao processar trabalhos do mês: %s", e)
 
@@ -342,6 +370,7 @@ def get_agenda_completa() -> None:
     Returns:
         None
     """
+    global df_agenda
     try:
         hoje = datetime.now()
         mes_corrente = hoje.month
@@ -375,6 +404,8 @@ def get_agenda_completa() -> None:
                 output_string += "Tab. Coroados: SIM\n"
             
             logger.info(output_string)
+        
+        df_agenda = df
     except Exception as e:
         logger.error("Erro ao processar agenda completa: %s", e)
 
@@ -456,5 +487,138 @@ def para_dirigentes() -> None:
     get_cambones_dirigentes()
     get_tarefas()
 
+def get_arrecadado():
+    global df_arrecadado
+    try:
+        logger.info("Getting arrecadado data")
+        # ... existing code ...
+        return df_arrecadado
+    except Exception as e:
+        logger.error(f"Error in get_arrecadado: {e}")
+        return None
+
+def get_pendente():
+    global df_pendente
+    try:
+        logger.info("Getting pendente data")
+        # ... existing code ...
+        return df_pendente
+    except Exception as e:
+        logger.error(f"Error in get_pendente: {e}")
+        return None
+
+def get_total():
+    global df_total
+    try:
+        logger.info("Getting total data")
+        # ... existing code ...
+        return df_total
+    except Exception as e:
+        logger.error(f"Error in get_total: {e}")
+        return None
+
+def run_all():
+    try:
+        logger.info("Running all methods")
+        get_mensalidades()
+        get_doacoes()
+        get_contas()
+        get_trabalhos_mes()
+        get_agenda_completa()
+        get_valores()
+        get_arrecadado()
+        get_pendente()
+        get_total()
+        logger.info("All methods completed successfully")
+        return True
+    except Exception as e:
+        logger.error(f"Error in run_all: {e}")
+        return False
+
+def format_dataframe_for_whatsapp(df, title=None):
+    if df is None or df.empty:
+        return "Nenhum dado disponível."
+    
+    try:
+        result = f"*{title}*\n\n" if title else ""
+        
+        for index, row in df.iterrows():
+            for col in df.columns:
+                value = row[col]
+                if isinstance(value, (int, float)):
+                    if 'valor' in col.lower() or 'total' in col.lower():
+                        value = f"R$ {value:.2f}"
+                    else:
+                        value = str(value)
+                result += f"*{col}:* {value}\n"
+            result += "\n"
+        
+        return result
+    except Exception as e:
+        logger.error(f"Error formatting DataFrame: {e}")
+        return f"Erro ao formatar dados: {str(e)}"
+
+def print_dataframe(title, df):
+    """Print a formatted dataframe with a title."""
+    print(f"\n=== {title} ===")
+    print(format_dataframe_for_whatsapp(df))
+
+def execute_command(command_name, command_func):
+    """Execute a command function and print its result."""
+    command_func()
+    print_dataframe(command_name.upper(), globals()[f"df_{command_name.lower()}"])
+
+def setup_parser():
+    """Set up and return the argument parser with all commands."""
+    parser = argparse.ArgumentParser(description='Process financial data for WhatsApp bot')
+    
+    # Define command mapping
+    commands = {
+        'mensalidades': get_mensalidades,
+        'doacoes': get_doacoes,
+        'contas': get_contas,
+        'trabalhos_mes': get_trabalhos_mes,
+        'agenda_completa': get_agenda_completa,
+        'valores': get_valores,
+        'arrecadado': get_arrecadado,
+        'pendente': get_pendente,
+        'total': get_total
+    }
+    
+    # Add arguments based on commands
+    for cmd in commands:
+        parser.add_argument(f'--get{cmd.replace("_", "").title()}', 
+                           action='store_true', 
+                           help=f'Run get_{cmd} method')
+    
+    parser.add_argument('--all', action='store_true', help='Run all methods')
+    
+    return parser, commands
+
+def process_commands(args, commands):
+    """Process the parsed arguments and execute the appropriate commands."""
+    # If no arguments provided, run all
+    if not any(vars(args).values()):
+        args.all = True
+    
+    if args.all:
+        run_all()
+        # Print all dataframes
+        for cmd in commands:
+            print_dataframe(cmd.upper(), globals()[f"df_{cmd}"])
+    else:
+        # Execute only the requested commands
+        for cmd, func in commands.items():
+            arg_name = f"get{cmd.replace('_', '').title()}"
+            if getattr(args, arg_name, False):
+                execute_command(cmd, func)
+
+def main():
+    parser, commands = setup_parser()
+    args = parser.parse_args()
+    process_commands(args, commands)
+
 if __name__ == "__main__":
-    para_filhos()
+    main()
+
+
