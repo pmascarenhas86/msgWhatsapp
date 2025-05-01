@@ -214,6 +214,8 @@ def get_aniversarios() -> None:
     Returns:
         None
     """
+    global df_aniversarios
+
     try:
         sh = aux.abrir_planilha_dirigentes()
         filtro_aniversario = datetime.now().strftime('/%m')
@@ -231,7 +233,6 @@ def get_aniversarios() -> None:
         df = df.sort_values(by='DATA', ascending=True, na_position='first')
 
         aux.imprimir_dados('arquivo', df)
-        global df_aniversarios
         df_aniversarios = df
 
     except Exception as e:
@@ -319,27 +320,6 @@ def get_gira_semana() -> None:
     except Exception as e:
         logger.error("Erro ao processar gira da semana: %s", e)
 
-def get_valores() -> None:
-    """
-    Obtém e exibe os valores de doações do mês atual.
-
-    Returns:
-        None
-    """
-    global df_valores
-    try:
-        sh = aux.abrir_planilha_dirigentes()
-        data = sh.worksheet("2024").get_all_values()
-
-        df = pd.DataFrame(data[1:], columns=data[0])
-        doacao_mes_atual = df.loc[df['NOME'] == DOACOES, NOME_MES].values[0]
-
-        logger.info('DOAÇÕES %s: R$ %s', NOME_MES, doacao_mes_atual)
-
-        df_valores = df
-    except Exception as e:
-        logger.error("Erro ao processar valores: %s", e)
-
 def get_trabalhos_mes() -> None:
     """
     Obtém e exibe os trabalhos do mês atual.
@@ -347,7 +327,7 @@ def get_trabalhos_mes() -> None:
     Returns:
         None
     """
-    global df_trabalhos
+    global df_trabalhos_mes
     try:
         filtro = aux.proximo_sabado().strftime("/%m/")
         aux.montar_headers('| CALENDARIO |')
@@ -362,7 +342,7 @@ def get_trabalhos_mes() -> None:
                 output_string = "%s - %s" % (row[0], row[1])
             logger.info(output_string)
 
-        df_trabalhos = df
+        df_trabalhos_mes = df
     except Exception as e:
         logger.error("Erro ao processar trabalhos do mês: %s", e)
 
@@ -528,10 +508,10 @@ def run_all():
         get_contas()
         get_trabalhos_mes()
         get_agenda_completa()
-        get_valores()
-        get_arrecadado()
-        get_pendente()
-        get_total()
+        # get_valores()
+        # get_arrecadado()
+        # get_pendente()
+        # get_total()
         logger.info("All methods completed successfully")
         return True
     except Exception as e:
@@ -577,16 +557,16 @@ def setup_parser():
 
     # Define command mapping
     commands = {
+        'informacao': para_filhos,
         'aniversarios': get_aniversarios,
         'mensalidades': get_mensalidades,
         'doacoes': get_doacoes,
         'contas': get_contas,
         'trabalhos_mes': get_trabalhos_mes,
         'agenda_completa': get_agenda_completa,
-        'valores': get_valores,
-        'arrecadado': get_arrecadado,
+        # 'arrecadado': get_arrecadado,
         'pendente': get_pendente,
-        'total': get_total
+        # 'total': get_total
     }
 
     # Add arguments based on commands
@@ -623,9 +603,15 @@ def main():
     process_commands(args, commands)
 
 if __name__ == "__main__":
-    # mensagem_padrao()
-    # get_gira_semana()
-    # get_trabalhos_mes()
-    # get_cambones()
-    # get_tarefas()
-    main()
+        # logger.info("Running all methods")
+        # get_mensalidades() - OK
+        # get_doacoes() - Com erro
+        # get_contas() - OK
+        # get_trabalhos_mes() - OK
+        # get_agenda_completa() - OK
+        # get_arrecadado()  -Erro
+        # get_pendente()
+        # get_total()
+        # logger.info("All methods completed successfully")
+        # para_filhos()
+        main()

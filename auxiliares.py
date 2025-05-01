@@ -19,7 +19,6 @@ if env_nome == 'PRODUCTION':
     local_arquivo_config = '/etc/secrets/credentials.json'
 else:
     local_arquivo_config = 'D:\\CONFIG_BOT\\credentials.json'
-print(f"Caminho do arquivo de config: {local_arquivo_config}")
 
 locale.setlocale(locale.LC_ALL, 'pt_BR.utf8')
 warnings.simplefilter(action='ignore', category=FutureWarning)

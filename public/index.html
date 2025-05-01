@@ -77,14 +77,14 @@
 </head>
 <body>
     <div class="container">
-        <h1>WhatsApp Bot QR Code</h1>
-        
-        <div id="status" class="status waiting">Waiting for QR code...</div>
-        
+        <h1>WhatsApp MacumBot QR Code</h1>
+
+        <div id="status" class="status waiting">Esperando QR code...</div>
+
         <div id="qrcode"></div>
-        
+
         <div id="log"></div>
-        
+
         <div class="instructions">
             <h3>Instructions:</h3>
             <ol>
@@ -102,33 +102,33 @@
         const qrcodeElement = document.getElementById('qrcode');
         const statusElement = document.getElementById('status');
         const logElement = document.getElementById('log');
-        
+
         function addLog(message) {
             const timestamp = new Date().toLocaleTimeString();
             logElement.innerHTML += `<div>[${timestamp}] ${message}</div>`;
             logElement.scrollTop = logElement.scrollHeight;
         }
-        
+
         socket.on('connect', () => {
             addLog('Connected to server');
         });
-        
+
         socket.on('status', (status) => {
             addLog(`Status: ${status}`);
             statusElement.textContent = status;
-            
+
             if (status.includes('ready')) {
                 statusElement.className = 'status ready';
             } else {
                 statusElement.className = 'status waiting';
             }
         });
-        
+
         socket.on('qr', (qr) => {
             qrcodeElement.innerHTML = `<img src="${qr}" alt="QR Code">`;
             addLog('New QR code received');
         });
-        
+
         socket.on('disconnect', () => {
             addLog('Disconnected from server');
             statusElement.textContent = 'Disconnected from server';
