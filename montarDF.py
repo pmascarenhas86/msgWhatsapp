@@ -452,6 +452,7 @@ def para_filhos() -> None:
     Returns:
         None
     """
+
     mensagem_padrao()
     get_gira_semana()
     get_trabalhos_mes()
@@ -518,38 +519,38 @@ def run_all():
         logger.error(f"Error in run_all: {e}")
         return False
 
-def format_dataframe_for_whatsapp(df, title=None):
-    if df is None or df.empty:
-        return "Nenhum dado disponível."
+# def format_dataframe_for_whatsapp(df, title=None):
+#     if df is None or df.empty:
+#         return "Nenhum dado disponível."
 
-    try:
-        result = f"*{title}*\n\n" if title else ""
+#     try:
+#         result = f"*{title}*\n\n" if title else ""
 
-        for index, row in df.iterrows():
-            for col in df.columns:
-                value = row[col]
-                if isinstance(value, (int, float)):
-                    if 'valor' in col.lower() or 'total' in col.lower():
-                        value = f"R$ {value:.2f}"
-                    else:
-                        value = str(value)
-                result += f"*{col}:* {value}\n"
-            result += "\n"
+#         for index, row in df.iterrows():
+#             for col in df.columns:
+#                 value = row[col]
+#                 if isinstance(value, (int, float)):
+#                     if 'valor' in col.lower() or 'total' in col.lower():
+#                         value = f"R$ {value:.2f}"
+#                     else:
+#                         value = str(value)
+#                 result += f"*{col}:* {value}\n"
+#             result += "\n"
 
-        return result
-    except Exception as e:
-        logger.error(f"Error formatting DataFrame: {e}")
-        return f"Erro ao formatar dados: {str(e)}"
+#         return result
+#     except Exception as e:
+#         logger.error(f"Error formatting DataFrame: {e}")
+#         return f"Erro ao formatar dados: {str(e)}"
 
-def print_dataframe(title, df):
-    """Print a formatted dataframe with a title."""
-    print(f"\n=== {title} ===")
-    print(format_dataframe_for_whatsapp(df))
+# def print_dataframe(title, df):
+#     """Print a formatted dataframe with a title."""
+#     print(f"\n=== {title} ===")
+#     print(format_dataframe_for_whatsapp(df))
 
 def execute_command(command_name, command_func):
     """Execute a command function and print its result."""
     command_func()
-    print_dataframe(command_name.upper(), globals()[f"df_{command_name.lower()}"])
+    # print_dataframe(command_name.upper(), globals()[f"df_{command_name.lower()}"])
 
 def setup_parser():
     """Set up and return the argument parser with all commands."""
