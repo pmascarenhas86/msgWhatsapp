@@ -8,6 +8,13 @@ const { spawn } = require('child_process');
 const app = express();
 const server = http.createServer(app);
 const io = socketIo(server);
+const numerosAutorizados = ['5511974671053', '5511983242565', '5511996667659'];
+const comandosRestritos = {
+    '!mensalidades': '--mensalidades',
+    '!doacoes': '--doacoes',
+    '!contas': '--contas'
+};
+
 
 app.use(express.static('public'));
 
@@ -51,24 +58,29 @@ client.on('qr', async (qr) => {
 
 client.on('message', async (message) => {
     const comando = message.body.toLowerCase();
+    const remetente = message.from;
 
     const comandos = {
         '!agenda': '--agenda',
-        '!mensalidades': '--mensalidades',
-        '!doacoes': '--doacoes',
-        '!contas': '--contas',
         '!trabalhos': '--trabalhos',
-        '!informacao': '--informacao'
+        '!informacao': '--informacao',
+        ...comandosRestritos
     };
 
     if (['oi', 'olá'].includes(comando)) {
-        client.sendMessage(message.from, 'Olá! Tudo bem com você?');
+        client.sendMessage(remetente, 'Olá! Tudo bem com você?');
     } else if (comando in comandos) {
-        executePythonCommand(message.from, comandos[comando]);
+        // Verifica se o comando é restrito e se o número tem permissão
+        if (comando in comandosRestritos && !numerosAutorizados.includes(remetente)) {
+            client.sendMessage(remetente, '❌ Desculpe, mas essa informação somente dirigentes têm acesso.');
+        } else {
+            executePythonCommand(remetente, comandos[comando]);
+        }
     } else if (comando === '!ajuda' || comando === '!comandos') {
-        client.sendMessage(message.from, mensagemAjuda);
+        client.sendMessage(remetente, mensagemAjuda);
     }
 });
+
 
 function executePythonCommand(contactNumber, command) {
     console.log(`Executando Python: ${command} para ${contactNumber}`);
