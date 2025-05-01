@@ -373,7 +373,7 @@ def get_agenda_completa() -> None:
     Returns:
         None
     """
-    global df_agenda
+    global df_agenda_completa
     try:
         hoje = datetime.now()
         mes_corrente = hoje.month
@@ -408,7 +408,7 @@ def get_agenda_completa() -> None:
 
             logger.info(output_string)
 
-        df_agenda = df
+        df_agenda_completa = df
     except Exception as e:
         logger.error("Erro ao processar agenda completa: %s", e)
 
@@ -623,9 +623,9 @@ def main():
     process_commands(args, commands)
 
 if __name__ == "__main__":
-    mensagem_padrao()
+    # mensagem_padrao()
     # get_gira_semana()
     # get_trabalhos_mes()
     # get_cambones()
     # get_tarefas()
-    # main()
+    main()
