@@ -1,6 +1,7 @@
 ﻿# Dependencies
 node_modules/
 __pycache__/
+*__pycache__/
 .pytest_cache/
 .wwebjs_cache/
 
@@ -14,6 +15,7 @@ credentials.json
 token.json
 whatsapp-session.json
 config/*
+*config/*
 
 # Logs
 logs

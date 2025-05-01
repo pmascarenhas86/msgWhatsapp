@@ -623,4 +623,9 @@ def main():
     process_commands(args, commands)
 
 if __name__ == "__main__":
-    main()
+    mensagem_padrao()
+    # get_gira_semana()
+    # get_trabalhos_mes()
+    # get_cambones()
+    # get_tarefas()
+    # main()
