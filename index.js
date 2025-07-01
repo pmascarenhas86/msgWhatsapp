@@ -1,22 +1,14 @@
 ﻿const { Client } = require('whatsapp-web.js');
-const qrcode = require('qrcode');
-const express = require('express');
-const http = require('http');
-const socketIo = require('socket.io');
+const qrcodeTerminal = require('qrcode-terminal');
 const { spawn } = require('child_process');
 
-const app = express();
-const server = http.createServer(app);
-const io = socketIo(server);
 const numerosAutorizados = ['5511974671053', '5511983242565', '5511996667659'];
 const comandosRestritos = {
     '!mensalidades': '--mensalidades',
     '!doacoes': '--doacoes',
-    '!contas': '--contas'
+    '!contas': '--contas',
+    '!aniversarios': '--aniversarios'
 };
-
-
-app.use(express.static('public'));
 
 const client = new Client({
     puppeteer: {
@@ -42,18 +34,13 @@ const mensagemAjuda = `👋 Olá! Aqui estão os comandos disponíveis:
 📌 *!ajuda* ou *!comandos* – Mostra esta mensagem.
 `;
 
-let qrCodeData = null;
-
 client.on('ready', () => {
     console.log('Client is ready!');
-    io.emit('status', 'Client is ready!');
 });
 
-client.on('qr', async (qr) => {
-    console.log('New QR code received');
-    qrCodeData = await qrcode.toDataURL(qr);
-    io.emit('qr', qrCodeData);
-    io.emit('status', 'QR code recebido. Escaneie com o WhatsApp.');
+client.on('qr', (qr) => {
+    console.log('QR code received, scan it with your WhatsApp:');
+    qrcodeTerminal.generate(qr, { small: true });
 });
 
 client.on('message', async (message) => {
@@ -70,7 +57,6 @@ client.on('message', async (message) => {
     if (['oi', 'olá'].includes(comando)) {
         client.sendMessage(remetente, 'Olá! Tudo bem com você?');
     } else if (comando in comandos) {
-        // Verifica se o comando é restrito e se o número tem permissão
         if (comando in comandosRestritos && !numerosAutorizados.includes(remetente)) {
             client.sendMessage(remetente, '❌ Desculpe, mas essa informação somente dirigentes têm acesso.');
         } else {
@@ -80,7 +66,6 @@ client.on('message', async (message) => {
         client.sendMessage(remetente, mensagemAjuda);
     }
 });
-
 
 function executePythonCommand(contactNumber, command) {
     console.log(`Executando Python: ${command} para ${contactNumber}`);
@@ -106,18 +91,5 @@ function executePythonCommand(contactNumber, command) {
         }
     });
 }
-
-io.on('connection', (socket) => {
-    console.log('Novo cliente conectado');
-    socket.emit('status', 'Conectado ao servidor');
-    if (qrCodeData) socket.emit('qr', qrCodeData);
-    socket.on('disconnect', () => console.log('Cliente desconectado'));
-});
-
-const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
-    console.log(`Servidor rodando na porta ${PORT}`);
-    io.emit('status', `Servidor rodando na porta ${PORT}`);
-});
 
 client.initialize();
